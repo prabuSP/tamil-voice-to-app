@@ -4,14 +4,10 @@
 "private": true,
 "description": "Tamil Voice-to-App AI web application generator",
 "scripts": {
-"dev": "next dev",
-"build": "next build",
-"start": "next start",
-"lint": "next lint",
-"type-check": "tsc --noEmit",
-"prisma:generate": "prisma generate",
-"prisma:migrate": "prisma migrate dev",
-"prisma:studio": "prisma studio"
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "lint": "next lint"
 },
 "dependencies": {
 "@hookform/resolvers": "^3.10.0",
@@ -21,7 +17,7 @@
 "jspdf": "^3.0.1",
 "jspdf-autotable": "^5.0.2",
 "lucide-react": "^0.511.0",
-"next": "15.3.3",
+"next": "15.5.2",
 "openai": "^6.0.0",
 "react": "19.0.0",
 "react-dom": "19.0.0",

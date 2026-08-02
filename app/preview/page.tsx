@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -21,21 +23,29 @@ address: '',
 });
 
 useEffect(() => {
-if (typeof window !== 'undefined') {
-const saved = window.localStorage.getItem('customers');
-if (saved) {
-setCustomers(JSON.parse(saved));
-}
-}
+  if (typeof window === 'undefined') return;
+
+  try {
+    const saved = window.localStorage.getItem('customers');
+    if (saved) {
+      setCustomers(JSON.parse(saved));
+    }
+  } catch (error) {
+    console.error('Failed to load customers', error);
+  }
 }, []);
 
 useEffect(() => {
-if (typeof window !== 'undefined') {
-window.localStorage.setItem(
-'customers',
-JSON.stringify(customers)
-);
-}
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(
+      'customers',
+      JSON.stringify(customers)
+    );
+  } catch (error) {
+    console.error('Failed to save customers', error);
+  }
 }, [customers]);
 
 const addCustomer = () => {
