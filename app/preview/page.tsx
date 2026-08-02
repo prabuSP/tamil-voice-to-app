@@ -1,8 +1,7 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface Customer {
@@ -13,13 +12,8 @@ address: string;
 }
 
 export default function PreviewPage() {
-const searchParams = useSearchParams();
-const specParam = searchParams.get('spec');
-
-const [spec, setSpec] = useState<any>(null);
 const [customers, setCustomers] = useState<Customer[]>([]);
 const [showModal, setShowModal] = useState(false);
-
 const [form, setForm] = useState({
 name: '',
 mobile: '',
@@ -27,40 +21,36 @@ address: '',
 });
 
 useEffect(() => {
-try {
-if (specParam) {
-setSpec(JSON.parse(decodeURIComponent(specParam)));
-}
-} catch (e) {
-console.error(e);
-}
-
-const saved = localStorage.getItem('customers');
+if (typeof window !== 'undefined') {
+const saved = window.localStorage.getItem('customers');
 if (saved) {
-  setCustomers(JSON.parse(saved));
+setCustomers(JSON.parse(saved));
 }
-
-}, [specParam]);
+}
+}, []);
 
 useEffect(() => {
-localStorage.setItem('customers', JSON.stringify(customers));
+if (typeof window !== 'undefined') {
+window.localStorage.setItem(
+'customers',
+JSON.stringify(customers)
+);
+}
 }, [customers]);
 
 const addCustomer = () => {
-if (!form.name.trim()) {
-alert('Customer name is required');
-return;
-}
+if (!form.name.trim()) return;
 
 
-const newCustomer: Customer = {
-  id: Date.now(),
-  name: form.name,
-  mobile: form.mobile,
-  address: form.address,
-};
-
-setCustomers([...customers, newCustomer]);
+setCustomers([
+  ...customers,
+  {
+    id: Date.now(),
+    name: form.name,
+    mobile: form.mobile,
+    address: form.address,
+  },
+]);
 
 setForm({
   name: '',
@@ -70,6 +60,7 @@ setForm({
 
 setShowModal(false);
 
+
 };
 
 const deleteCustomer = (id: number) => {
@@ -77,55 +68,56 @@ setCustomers(customers.filter((c) => c.id !== id));
 };
 
 const exportReport = () => {
-  if (customers.length === 0) {
-    alert('No customer data available');
-    return;
-  }
+if (customers.length === 0) {
+alert('No customer data available');
+return;
+}
 
-  const doc = new jsPDF();
 
-  doc.setFontSize(20);
-  doc.text(spec?.appName || 'Customer Report', 14, 20);
+const doc = new jsPDF();
 
-  doc.setFontSize(11);
-  doc.text(
-    `Generated on: ${new Date().toLocaleString()}`,
-    14,
-    30
-  );
+doc.setFontSize(20);
+doc.text('Customer Management Report', 14, 20);
 
-  autoTable(doc, {
-    startY: 40,
-    head: [['Name', 'Mobile', 'Address']],
-    body: customers.map((c) => [
-      c.name,
-      c.mobile,
-      c.address,
-    ]),
-    theme: 'grid',
-    headStyles: {
-      fillColor: [37, 99, 235],
-    },
-  });
+autoTable(doc, {
+  startY: 30,
+  head: [['Name', 'Mobile', 'Address']],
+  body: customers.map((c) => [
+    c.name,
+    c.mobile,
+    c.address,
+  ]),
+});
 
-  doc.save(`${spec?.appName || 'customer'}-report.pdf`);
+doc.save('customer-report.pdf');
+
+
 };
 
-if (!spec) {
-return (
-<main style={{ padding: 40 }}> <h1>No generated app found</h1> </main>
-);
-}
+const cardStyle: React.CSSProperties = {
+background: '#11162A',
+border: '1px solid #20263A',
+borderRadius: 20,
+padding: 24,
+boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+};
 
 return (
 <main
 style={{
 minHeight: '100vh',
-background: '#F5F7FB',
+background:
+'linear-gradient(135deg,#0B1020,#11162A)',
+color: 'white',
 padding: 40,
 }}
 >
-<div style={{ maxWidth: 1200, margin: '0 auto' }}>
+<div
+style={{
+maxWidth: 1200,
+margin: '0 auto',
+}}
+>
 <div
 style={{
 display: 'flex',
@@ -138,83 +130,144 @@ marginBottom: 32,
 style={{
 fontSize: 36,
 fontWeight: 800,
-marginBottom: 8,
+margin: 0,
 }}
 >
-{spec.appName} </h1>
-<p style={{ color: '#64748B' }}>
+Customer Management </h1>
+<p
+style={{
+color: '#94A3B8',
+marginTop: 8,
+}}
+>
 AI-generated application preview </p> </div>
 
-      <button
-        onClick={() => setShowModal(true)}
+
+      <div
         style={{
-          padding: '12px 18px',
-          background: '#2563EB',
-          color: 'white',
-          border: 'none',
-          borderRadius: 12,
-          cursor: 'pointer',
-          fontWeight: 600,
+          display: 'flex',
+          gap: 12,
         }}
       >
-        Add Customer
-      </button>
-      <button
-  onClick={exportReport}
-  style={{
-    padding: '12px 18px',
-    background: '#059669',
-    color: 'white',
-    border: 'none',
-    borderRadius: 12,
-    cursor: 'pointer',
-    fontWeight: 600,
-  }}
->
-  Export Report
-</button>
-    </div>
-
-    <div
-      style={{
-        display: 'flex',
-        gap: 12,
-        marginBottom: 24,
-      }}
-    >
-      {spec.features.map((f: string) => (
-        <div
-          key={f}
+        <button
+          onClick={exportReport}
           style={{
-            padding: '10px 16px',
-            background: '#E0E7FF',
-            borderRadius: 10,
-            fontWeight: 600,
+            padding: '12px 18px',
+            borderRadius: 14,
+            border: '1px solid #2A3350',
+            background: '#151B2E',
+            color: 'white',
+            cursor: 'pointer',
           }}
         >
-          {f}
-        </div>
-      ))}
+          Export PDF
+        </button>
+
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            padding: '12px 18px',
+            borderRadius: 14,
+            border: 'none',
+            background:
+              'linear-gradient(90deg,#2563EB,#7C3AED)',
+            color: 'white',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Add Customer
+        </button>
+      </div>
     </div>
 
     <div
       style={{
-        background: 'white',
-        border: '1px solid #E5E7EB',
-        borderRadius: 20,
-        padding: 24,
+        display: 'grid',
+        gridTemplateColumns:
+          'repeat(4,minmax(0,1fr))',
+        gap: 18,
+        marginBottom: 28,
       }}
     >
-      <h2
-        style={{
-          fontSize: 24,
-          fontWeight: 700,
-          marginBottom: 20,
-        }}
-      >
-        Customers
-      </h2>
+      <div style={cardStyle}>
+        <div
+          style={{
+            color: '#94A3B8',
+          }}
+        >
+          Customers
+        </div>
+        <div
+          style={{
+            fontSize: 32,
+            fontWeight: 800,
+            marginTop: 10,
+          }}
+        >
+          {customers.length}
+        </div>
+      </div>
 
+      <div style={cardStyle}>
+        <div
+          style={{
+            color: '#94A3B8',
+          }}
+        >
+          Dashboard
+        </div>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            marginTop: 10,
+          }}
+        >
+          Active
+        </div>
+      </div>
+
+      <div style={cardStyle}>
+        <div
+          style={{
+            color: '#94A3B8',
+          }}
+        >
+          CRUD
+        </div>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            marginTop: 10,
+          }}
+        >
+          Ready
+        </div>
+      </div>
+
+      <div style={cardStyle}>
+        <div
+          style={{
+            color: '#94A3B8',
+          }}
+        >
+          Reports
+        </div>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            marginTop: 10,
+          }}
+        >
+          Export
+        </div>
+      </div>
+    </div>
+
+    <div style={cardStyle}>
       <table
         style={{
           width: '100%',
@@ -223,26 +276,82 @@ AI-generated application preview </p> </div>
       >
         <thead>
           <tr>
-            <th style={{ textAlign: 'left', padding: 12 }}>பெயர்</th>
-            <th style={{ textAlign: 'left', padding: 12 }}>மொபைல்</th>
-            <th style={{ textAlign: 'left', padding: 12 }}>முகவரி</th>
-            <th style={{ textAlign: 'left', padding: 12 }}>Action</th>
+            <th
+              style={{
+                textAlign: 'left',
+                padding: 14,
+                color: '#94A3B8',
+              }}
+            >
+              Name
+            </th>
+            <th
+              style={{
+                textAlign: 'left',
+                padding: 14,
+                color: '#94A3B8',
+              }}
+            >
+              Mobile
+            </th>
+            <th
+              style={{
+                textAlign: 'left',
+                padding: 14,
+                color: '#94A3B8',
+              }}
+            >
+              Address
+            </th>
+            <th
+              style={{
+                textAlign: 'left',
+                padding: 14,
+                color: '#94A3B8',
+              }}
+            >
+              Action
+            </th>
           </tr>
         </thead>
 
         <tbody>
-          {customers.map((customer) => (
-            <tr key={customer.id}>
-              <td style={{ padding: 12 }}>{customer.name}</td>
-              <td style={{ padding: 12 }}>{customer.mobile}</td>
-              <td style={{ padding: 12 }}>{customer.address}</td>
-              <td style={{ padding: 12 }}>
+          {customers.map((c) => (
+            <tr key={c.id}>
+              <td
+                style={{
+                  padding: 14,
+                }}
+              >
+                {c.name}
+              </td>
+              <td
+                style={{
+                  padding: 14,
+                }}
+              >
+                {c.mobile}
+              </td>
+              <td
+                style={{
+                  padding: 14,
+                }}
+              >
+                {c.address}
+              </td>
+              <td
+                style={{
+                  padding: 14,
+                }}
+              >
                 <button
-                  onClick={() => deleteCustomer(customer.id)}
+                  onClick={() =>
+                    deleteCustomer(c.id)
+                  }
                   style={{
-                    color: '#DC2626',
-                    background: 'none',
+                    background: 'transparent',
                     border: 'none',
+                    color: '#F87171',
                     cursor: 'pointer',
                   }}
                 >
@@ -275,7 +384,8 @@ AI-generated application preview </p> </div>
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background:
+            'rgba(0,0,0,0.6)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -283,17 +393,17 @@ AI-generated application preview </p> </div>
       >
         <div
           style={{
-            background: 'white',
-            padding: 24,
-            borderRadius: 20,
             width: 420,
+            background: '#11162A',
+            border:
+              '1px solid #20263A',
+            borderRadius: 20,
+            padding: 24,
           }}
         >
           <h3
             style={{
-              fontSize: 22,
-              fontWeight: 700,
-              marginBottom: 20,
+              marginTop: 0,
             }}
           >
             Add Customer
@@ -302,63 +412,112 @@ AI-generated application preview </p> </div>
           <div
             style={{
               display: 'grid',
-              gap: 14,
+              gap: 12,
             }}
           >
             <input
-              placeholder='பெயர்'
+              placeholder='Name'
               value={form.name}
               onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
+                setForm({
+                  ...form,
+                  name: e.target.value,
+                })
               }
+              style={{
+                padding: 14,
+                borderRadius: 12,
+                border:
+                  '1px solid #2A3350',
+                background: '#0F1425',
+                color: 'white',
+              }}
             />
 
             <input
-              placeholder='மொபைல்'
+              placeholder='Mobile'
               value={form.mobile}
               onChange={(e) =>
-                setForm({ ...form, mobile: e.target.value })
+                setForm({
+                  ...form,
+                  mobile: e.target.value,
+                })
               }
+              style={{
+                padding: 14,
+                borderRadius: 12,
+                border:
+                  '1px solid #2A3350',
+                background: '#0F1425',
+                color: 'white',
+              }}
             />
 
             <input
-              placeholder='முகவரி'
+              placeholder='Address'
               value={form.address}
               onChange={(e) =>
-                setForm({ ...form, address: e.target.value })
+                setForm({
+                  ...form,
+                  address: e.target.value,
+                })
               }
-            />
-
-            <div
               style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 10,
-                marginTop: 12,
+                padding: 14,
+                borderRadius: 12,
+                border:
+                  '1px solid #2A3350',
+                background: '#0F1425',
+                color: 'white',
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 12,
+              marginTop: 20,
+            }}
+          >
+            <button
+              onClick={() =>
+                setShowModal(false)
+              }
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border:
+                  '1px solid #2A3350',
+                background: '#151B2E',
+                color: 'white',
               }}
             >
-              <button
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
+              Cancel
+            </button>
 
-              <button
-                onClick={addCustomer}
-                style={{
-                  background: '#2563EB',
-                  color: 'white',
-                }}
-              >
-                Save Customer
-              </button>
-            </div>
+            <button
+              onClick={addCustomer}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: 'none',
+                background:
+                  'linear-gradient(90deg,#2563EB,#7C3AED)',
+                color: 'white',
+                fontWeight: 700,
+              }}
+            >
+              Save Customer
+            </button>
           </div>
         </div>
       </div>
     )}
   </div>
 </main>
+
 
 );
 }
